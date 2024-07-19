@@ -1,26 +1,35 @@
 
 INPUT(kernel.o)
+INPUT(vga.o)
+INPUT(asm.o)
+INPUT(idt.o)
+INPUT(int.o)
+INPUT(string.o)
+INPUT(kcub.o)
 OUTPUT(../kernel.bin)
-ENTRY(main)
+ENTRY(KernelEntry)
 OUTPUT_FORMAT(binary)
+
+
 SECTIONS
 {
-	.text BLOCK(512) : ALIGN(512)
+	.text 0x8000 :
 	{
+		*(.text.main);
 		*(.text)
 	}
 
-	.rodata BLOCK(512) : ALIGN(512)
+	.rodata :
 	{
 		*(.rodata)
 	}
 
-	.data BLOCK(512) : ALIGN(512)
+	.data :
 	{
 		*(.data)
 	}
 
-	.bss BLOCK(512) : ALIGN(512)
+	.bss :
 	{
 		*(COMMON)
 		*(.bss)

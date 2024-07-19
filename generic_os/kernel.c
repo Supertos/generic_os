@@ -6,13 +6,23 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "lib/idt.h"
+#include "lib/kcub.h"
+#include "int/int.h"
+#include "defines.h"
 
-void main( void ) {
-	uint8_t symbol = 0;
-	volatile uint8_t* vgaMem = (uint8_t*)0xB8000;
+
+void KernelEntry( void ) { 
+	SetIDT( (IDT*)0x100000 );
+	for( size_t i = 32; i > 0; i-- ) {
+		HookInterrupt( i - 1, (void*)GenericExceptionHandler, 0xF, 0 );
+	}
+	HookInterrupt( 64, (void*)PrintStringInterrupt, 0xE, 0 );
 	
-	*(vgaMem + 1) = 0x5c;
+	// __asm__ __volatile__ ( "int $64" );
 	
-	while( true )
-		*(vgaMem) = symbol++;
+	
+	size_t* v = 0x950000;
+	*v = 0;
+	while( true );
 }
