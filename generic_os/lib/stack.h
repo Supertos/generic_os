@@ -19,11 +19,11 @@
 	}														\
 															\
 	type* name##Push(name* stack) {							\
-		return &(stack->contents[++stack->size]);			\
+		return &(stack->contents[stack->size++]);			\
 	}														\
 															\
 	type* name##Peek(name* stack) {							\
-		return &stack->contents[stack->size];				\
+		return &(stack->contents[stack->size - 1]);			\
 	}														\
 															\
 	void name##SetSize(name* stack, size_t size) {			\
@@ -32,5 +32,5 @@
 															\
 	type* name##Direct(name* stack, size_t id) {			\
 		return &stack->contents[id];						\
-	}		
+	}	
 	

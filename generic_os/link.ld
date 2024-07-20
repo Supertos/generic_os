@@ -6,6 +6,7 @@ INPUT(idt.o)
 INPUT(int.o)
 INPUT(string.o)
 INPUT(kcub.o)
+INPUT(memory.o)
 OUTPUT(../kernel.bin)
 ENTRY(KernelEntry)
 OUTPUT_FORMAT(binary)
@@ -13,9 +14,9 @@ OUTPUT_FORMAT(binary)
 
 SECTIONS
 {
-	.text 0x8000 :
+	. = 0x8000;
+	.text :
 	{
-		*(.text.main);
 		*(.text)
 	}
 

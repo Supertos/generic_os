@@ -24,6 +24,12 @@ void HookInterrupt( uint8_t intid, void* func, uint8_t type, uint8_t dpl ) {
 void SetIDT( IDT* addr ) {
 	IDTR.offset = addr;
 	IDTR.size = IDT_SIZE * sizeof( GateDescriptor ) - 1;
+	
+	uint8_t* addr2 = (uint8_t*)addr;
+	
+	for( uint16_t i = 0; i < IDTR.size + 1; i++ ) {
+		addr2[i] = 0;
+	}
 	__asm__ __volatile__ ( "movl %0, %%eax; lidt (%%eax);"
 	:
 	:"rm"(&IDTR)

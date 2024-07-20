@@ -4,6 +4,7 @@
 ; Version 3
 ; Generic OS Bootloader Stage 1
 
+; This routine places Page Directory Table on top of memory map, allocates first 4MBs and places PT on the top of PDT.
 _enablePaging:
 	pusha
 	cld
@@ -37,10 +38,7 @@ _enablePaging:
 	
 	mov eax, cr0
 	or eax, 0x80000001
-	; hlt
 	mov cr0, eax
 	
 	popa
 	ret
-	
-	

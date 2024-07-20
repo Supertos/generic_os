@@ -13,18 +13,16 @@ jmp _begin ; Enforce correct CS = 0x7C0
 %include "memory.asm"
 %include "paging.asm"
 
-BootMessage db "OK", 0
 driveID db 0
-
 GDT:
 	_null dq 0
 	_code:
-		dw 0xffff 		; Base & Limit
-		dw 0x0 			; Base
+		dw 0xffff 		; Limit
+		dw 0x0 			; Base 1
 		db 0x0			; Base 2
-		db 0b10011010	; Flags
+		db 0b10011010	; Access Byte
 		db 0b11001111	; Flags + Limit
-		db 0x0			; Base 
+		db 0x0			; Base 3 
 	_data:
 		dw 0xffff 		; Base & Limit
 		dw 0x0 			; Base
@@ -43,12 +41,6 @@ _begin:
 	cli
 	mov [driveID], dl 	; Save Boot Drive ID
 	
-	; Erase all segment registers
-	xor ax, ax
-	mov es, ax
-	mov fs, ax
-	mov ds, ax
-	
 	; Setup stack
 	mov ax, 0x500 		; Begin of usable RAM
 	mov ss, ax			
@@ -56,10 +48,7 @@ _begin:
 	
 	xor ax, ax
 	
-	call _screenClear 	; Clear Screen and print BootMessage
-	call _cursorReset
-	mov si, BootMessage
-	call _print
+	call _screenClear 	; Clear Screen
 	
 	call _enableA20 	; Enable 21th bit for memory addressing
 	
@@ -67,9 +56,11 @@ _begin:
 	call _readDisk		; Read drive
 	
 	call _enablePaging 	; Switch to 32-bit mode
-	; hlt
+	
 	mov ax, 0b10000
 	mov ds, ax
+	mov ss, ax
+	add sp, 0x500
 	jmp 0x08:0x8000 ; Jump to the other part of bootloader
 	
 	

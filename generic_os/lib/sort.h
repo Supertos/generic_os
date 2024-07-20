@@ -12,8 +12,8 @@
 		size_t right = (i+1)*2;																			\
 																										\
 		size_t largest = i;																				\
-		if( left < size && type##Compare( arr[left], arr[largest] ) ) largest = left;					\
-		if( right < size && type##Compare( arr[right], arr[largest] ) ) largest = right;				\
+		if( left < size && type##Compare( &arr[left], &arr[largest] ) ) largest = left;					\
+		if( right < size && type##Compare( &arr[right], &arr[largest] ) ) largest = right;				\
 																										\
 		if( largest != i ) {                                                                            \
 		    type##Swap( &arr[largest], &arr[i] );										                \
@@ -36,3 +36,5 @@
 			type##Heapify( arr, 0, --heapsize );														\
 		}																								\
 	}																									\
+	
+	

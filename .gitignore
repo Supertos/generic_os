@@ -1,3 +1,3 @@
 image.img
-generic_os/**.o
-generic_bootloader/**.img
+generic_os/*.o
+generic_bootloader/*.img

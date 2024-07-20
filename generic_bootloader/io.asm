@@ -19,43 +19,6 @@ _screenClear:
 	
 	popa
 	ret
-	
-	
-; Sets cursor position to (0, 0)
-_cursorReset:
-	pusha
-	
-	mov ah, 0x02
-	mov bh, 0
-	mov dh, 0
-	mov dl, 0
-	int 0x10
-	
-	popa
-	ret
-	
-	
-; Prints string on the screen
-; DS:SI - String address
-_print:
-	pusha
-	
-	mov ah, 0x0F ; Determine Active Page
-	int 0x10
-			
-	mov ah, 0x0E
-	mov bl, 0x0
-		
-	lodsb
-	_printLoop:
-		int 0x10
-			
-		lodsb
-		cmp al, 0x0
-		jne _printLoop
-	
-	popa
-	ret
 
 	
 ; Reads one sector from lba
@@ -64,53 +27,44 @@ _print:
 ; DL - Drive ID
 _readLBA:
 	pusha
-	
-		; push ax
-		
-			; mov ah, 0x8 ; Getting drive geometry
-			; int 0x13
+		push es
+		push ax
+		push bx
+			mov ah, 0x8 ; Getting drive geometry
+			int 0x13
 			
-			; and cl, 0x3f ; Sectors Per Track
-			; add dh, 1 ; Number of Heads
-			
-		; pop ax
+			and cl, 0x3f ; Sectors Per Track
+			add dh, 1 ; Number of Heads
+		pop bx
+		pop ax
+		pop es
 		
-		; div cl ; AL is now LBA / Sectors Per Track, AH is LBA % Sectors Per Track		
-		; add ah, 1
+		div cl ; AL is now LBA / Sectors Per Track, AH is LBA % Sectors Per Track		
+		add ah, 1
 		
-		; mov byte [temp], al
-		; mov byte [sector], ah
+		mov byte [temp], al
+		mov byte [sector], ah
 		
-		; mov ah, 0x0 ; Clear upper half of AX. AX is now LBA / Sectors Per Track	
-		; div dh
+		mov ah, 0x0 ; Clear upper half of AX. AX is now LBA / Sectors Per Track	
+		div dh
 		
-		; mov byte [head], ah
+		mov byte [head], ah
 		
-		; mov byte [cylinder], al
+		mov byte [cylinder], al
 		
-		; mov ah, 0x02
-		; mov al, 1
-		; mov ch, byte [cylinder]
-		; and ch, 0xff
-		; mov cl, byte [sector]
+		mov ax, 0x0201
+		mov ch, byte [cylinder]
+		mov byte [temp], ch
+		and ch, 0xff
+		mov cl, byte [sector]
 		
-		; mov bh, byte [cylinder]
-		; mov byte [temp], bh
-		; shr byte [temp], 2
-		; and byte [temp], 0xc0
+		shr byte [temp], 2
+		and byte [temp], 0xc0
 		
-		; or cl, byte [temp]
+		or cl, byte [temp]
 		
-		; mov dh, byte [head]	
-		; int 0x13
-		
-		mov cl, al
-		mov ah, 2
-		mov al, 1
-		mov ch, 0
-		mov dh, 0
+		mov dh, byte [head]	
 		mov dl, [driveID]
-		
 		int 0x13
 	popa
 	ret

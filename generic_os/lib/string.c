@@ -59,7 +59,7 @@ size_t Len( char* s ) {
 	return out;
 }
 
-void Itoa(size_t n, char s[], uint8_t base) {
+void Itoa(int n, char s[], uint8_t base) {
 	uint8_t i = 0;
 	int sign = n > 0 ? 1 : -1;
  
@@ -89,7 +89,6 @@ void Uitoa(uint32_t n, char s[], uint8_t base) {
 char* Format( char* buf, char* restrict format, ... ) {
 	va_list args;
 	va_start(args, format);
-	
 	char* out = buf;
 	
 	char itoabuf[32];
@@ -97,8 +96,9 @@ char* Format( char* buf, char* restrict format, ... ) {
 	while( *(format) != '\0' ) {
 		if( *(format) == '%' ) {
 			switch( format[1] ) {
+				
 				case 'd':
-					Itoa( va_arg( args, size_t ), itoabuf, 10 );
+					Itoa( va_arg( args, int ), itoabuf, 10 );
 					buf = Copy( itoabuf, buf, Len(itoabuf) );
 				break;
 				case 'u':
@@ -127,7 +127,7 @@ char* Format( char* buf, char* restrict format, ... ) {
 		}
 		format++;
 	}
-	
+	va_end( args );
 	return out;
 }
 

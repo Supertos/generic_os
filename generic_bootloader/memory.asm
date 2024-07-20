@@ -9,7 +9,7 @@
 _enableA20:
 	pusha
 	
-	mov ax, 0
+	xor ax, ax
 	mov ds, ax
 	mov si, 0x7DFE
 	
@@ -69,15 +69,20 @@ _readMemMap:
 	mov ax, 0x50
 	mov es, ax
 		
-	mov di, 0
+	mov di, 8
 	
 	xor ebx, ebx
-	xor eax, eax
 	mov edx, 0x534D4150
 	mov eax, 0xE820
 	mov ecx, 24
 	
-	_memoryMapLoad: ; Dump memory map at 0x500
+	mov dword [0x500], 0
+	
+	_memoryMapLoad: ; Dump memory map at 0x508
+		mov dword [es:di], 0
+		mov dword [es:di + 8], 0
+		mov dword [es:di + 16], 0
+		inc dword [0x500]
 		int 0x15
 		
 		add di, 24
@@ -93,11 +98,10 @@ _readMemMap:
 
 _readDisk:
 	pusha
-	
-		mov ax, 0x0800
+		mov eax, 0x0800
 		mov es, ax
 		mov bx, 0
-		mov ax, 3
+		mov ax, 2
 		_romLoad:
 			call _readLBA
 			
