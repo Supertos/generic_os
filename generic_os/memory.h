@@ -34,8 +34,19 @@ struct MemoryMap {
 	MemoryMapEntry contents[];
 } __attribute__((__packed__));
 
-void InitializeMemoryManager( void );
-void* AllocatePage();
-void FreePage( void* ptr );
-size_t PageStackSize( void );
-void DefragmentPageStack( void );
+struct PageTable {
+	void* contents[1024];
+} __attribute__((__packed__));
+
+struct PageDirectoryTable {
+	PageTable* contents[1024];
+} __attribute__((__packed__));
+
+void InitializeMemoryManager( void ); // Initializes Memory Manager and fills PageStack.
+void* AllocatePage();	// Allocates random physical page. This physical page shall be mapped in PageTable to be present in RAM.
+void FreePage( void* ptr ); // Frees page and places it back in PageStack.
+size_t PageStackSize( void ); // Returns entry count in PageStack.
+void DefragmentPageStack( void ); // Sorts and merges page frames in PageStack.
+
+void MapVirtualPage( void* ptr, void* trg );
+void UnmapVirtualPage( void* ptr );

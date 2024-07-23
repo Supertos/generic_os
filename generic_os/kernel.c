@@ -24,6 +24,8 @@ void KernelEntry( void ) {
 	
 	InitializeMemoryManager();
 	
+	PrintString("Booted on the machine! Nya! >_<\n");
+	
 	while( true );
 }
 
