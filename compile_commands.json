@@ -1,0 +1,22 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-pedantic",
+      "-Wall",
+      "-Wextra",
+      "--ansi",
+      "-std=c99",
+      "-O2",
+      "-ffreestanding",
+      "-fPIC",
+      "-c",
+      "-o",
+      "build/os_entry.o",
+      "kernel/os_entry.c"
+    ],
+    "directory": "/home/supertos/generic-os",
+    "file": "/home/supertos/generic-os/kernel/os_entry.c",
+    "output": "/home/supertos/generic-os/build/os_entry.o"
+  }
+]
