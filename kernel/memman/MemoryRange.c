@@ -1,6 +1,6 @@
 /* Supertos Industries
  * MemoryRange implementation. MemoryRange describes severval continous MemoryPages (4K on x86).
- * This implementation uses Skip-List (SkipList.h) as well as mergin quirks for premature (before allocation) hugepage (2M on x86) forming.
+ * This implementation uses Skip-List (SkipList.h) as well as merging quirks for premature (before allocation) hugepage (2M on x86) formation.
  */
 
 #include "SkipList.h"
@@ -21,47 +21,6 @@ struct MemoryRange {
     size_t Pages;
     uintptr_t Begin;
 };
-
-
-typedef struct PoolElement PoolElement;
-struct PoolElement {
-    PoolElement* Next;
-};
-
-
-/* Splits region in Pool elements of fixed size and updates pool top element for pool to contain new elements. */
-void RegionToPool( PoolElement** top, void* begin, size_t length, size_t elementLength ) {
-    if( length < elementLength || elementLength < sizeof(PoolElement) ) return;
-
-    PoolElement* end = (PoolElement*)((uintptr_t)begin + length - elementLength);
-    PoolElement* cur, *next = (PoolElement*)begin;
-    do {
-        cur = next;
-        cur->Next = (PoolElement*)((uintptr_t*)cur + elementLength);
-    } while( (next=cur->Next) <= end );
-
-    cur->Next = *top;
-    *top = (PoolElement*)begin;
-}
-
-
-/* Allocates element from pool. */
-void* AllocateFromPool( PoolElement** top ) {
-    if( !(*top) ) return NULL;
-
-    void* out = *top;
-    *top = (*top)->Next;
-    return out;
-}
-
-
-/* Frees element to pool. */
-void FreeToPool( PoolElement** top, void* element ) {
-    if( !element ) return;
-
-    ((PoolElement*)element)->Next = *top;
-    *top = (PoolElement*)element;
-}
 
 
 /* Returns random node height based on geometrical law. */
@@ -108,41 +67,22 @@ void SetMemoryRangePages( MemoryInfo* info, MemoryRange* range, size_t pages ) {
  * Function may not create new MemoryRange if memory is insufficient - in this case it uses provided memory region for pools.
  */
 void NewMemoryRange( MemoryInfo* info, uintptr_t begin, size_t pages ) {
-    MemoryRange* range = AllocateFromPool( &info->MemoryRangeFreeList );
-    SkipList* sizeList = AllocateFromPool( &info->SkipListFreeList );
-    SkipList* addrList = AllocateFromPool( &info->SkipListFreeList );
+    MemoryRange* range = (MemoryRange*)begin;
+    SkipList* sizeList = (SkipList*)( begin + sizeof(MemoryRange) );
+    SkipList* addrList = (SkipList*)( sizeList + 1 );
 
-    if( !range && pages > 0 ) {
-        RegionToPool( &info->MemoryRangeFreeList, (PoolElement*)(begin + (--pages) * PAGE_SIZE), PAGE_SIZE, sizeof(MemoryRange) );
-        range = AllocateFromPool( &info->MemoryRangeFreeList );
-    }
-
-    if( (!addrList || !sizeList) && pages > 0 ) {
-        RegionToPool( &info->SkipListFreeList,  (PoolElement*)(begin + (--pages) * PAGE_SIZE), PAGE_SIZE, sizeof(SkipList) );
-        sizeList = sizeList ? sizeList : AllocateFromPool( &info->SkipListFreeList );
-        addrList = addrList ? addrList : AllocateFromPool( &info->SkipListFreeList );
-    }
-
-    if( !addrList || !sizeList || !range || pages == 0 ) {
-        FreeToPool( &info->SkipListFreeList, sizeList );
-        FreeToPool( &info->SkipListFreeList, addrList );
-        FreeToPool( &info->MemoryRangeFreeList, range );
-        return;
-    }
-
-    SkipListInitNode(addrList);
-    SkipListInitNode(sizeList);
-    SetSkipListPayload(addrList, range);
-    SetSkipListPayload(sizeList, range);
+    SkipListInitNode( addrList, range  );
+    SkipListInitNode( sizeList, range );
     
     *range = (MemoryRange){
         .AddrNode = addrList,
-        .SizeNode = sizeList };
+        .SizeNode = sizeList 
+    };
     
     SetMemoryRangeBegin( info, range, begin );
     SetMemoryRangePages( info, range, pages );
 
-    MemoryRange* next = SkipListPayload(SkipListNext(range->AddrNode));
+    MemoryRange* next = SkipListPayload( SkipListNext(range->AddrNode) );
     TryMergeMemoryRangesWithPrev( info, next );
     TryMergeMemoryRangesWithPrev( info, range );
 }
@@ -152,11 +92,6 @@ void NewMemoryRange( MemoryInfo* info, uintptr_t begin, size_t pages ) {
 void MemoryRangeRemove( MemoryInfo* info, MemoryRange* range ) {
     SkipListRemove( range->AddrNode );
     SkipListRemove( range->SizeNode );
-
-    FreeToPool( &info->SkipListFreeList, range->AddrNode );
-    FreeToPool( &info->SkipListFreeList, range->SizeNode );
-
-    FreeToPool( &info->MemoryRangeFreeList, range );
 }
 
 
@@ -172,6 +107,7 @@ void TryMergeMemoryRangesWithPrev( MemoryInfo* info, MemoryRange* range ) {
 
     bool prevAligned = prev->Begin % HUGEPAGE_SIZE == 0;
     bool rangeAligned = range->Begin % HUGEPAGE_SIZE == 0;
+
     if( !prevAligned && rangeAligned ) return;
     
     SetMemoryRangePages( info, prev, prev->Pages + range->Pages );

@@ -51,7 +51,7 @@ struct SLAB {
 
     spinlock_t InUse;
     
-    uint8_t _Reserved; // TODO: This is too reliant that spinlock_t is uint8_t.
+    uint8_t _Reserved; // TODO: This is too reliant on spinlock_t being uint8_t.
 
     bitmap_t Bitmap[SLABS_BITMAP_COUNT];
 } __attribute__((aligned(CACHELINE_LENGTH)));
@@ -100,6 +100,10 @@ static inline size_t SLABCanFree( SLAB* slab ) {
 
 static inline size_t SLABSizeToOrder( size_t size ) {
     return BSR(size - 1) + 1 - BSR(SLABS_MIN_ALLOC);
+}
+
+static inline size_t SLABObjectOrder( void* obj ) {
+    return SLABSizeToOrder( SLABObject(obj)->ElementLength );
 }
 
 void* SLABFirst( SLAB* slab ) {
@@ -295,34 +299,38 @@ static inline bool SLABCanRemoveObjectFromList( void* obj ) {
     return SLABMainTotal( slab ) == slab->MainElementCount;
 }
 
-void SLABRemoveFromList( SLUB* slub, void* obj ) {
-    SLAB* slab = SLABObject( obj );
-    size_t order = SLABSizeToOrder( slab->ElementLength );
 
+void SLABListRemove( SLUB* slub, void* obj ) {
+    SpinlockLock( removeLock );
+
+    size_t order = SLABObjectOrder( obj );
     void** head = &slub->Partial[order];
+
+    void* next = *SLABNext( obj );
+    void* prev = *SLABPrev( obj );
+
+    if( obj == head ) {
+        if( next ) *SLABPrev( next ) = NULL;
+        *head = next;
+    }else{
+        if( next ) *SLABPrev( next ) = prev;
+        *SLABNext( prev ) = next;
+    }
+
+    SpinlockRelease( removeLock );
+}
+
+void SLABTrySafeListRemove( SLUB* slub, void* obj ) {
+    size_t order = SLABObjectOrder( obj );
     spinlock_t* removeLock = &slub->RemoveLock[order];
 
-    SpinlockLock( &slab->InUse );
-    if( SLABCanRemoveObjectFromList(obj) ) {
-        SpinlockLock( removeLock );
-
-        void* next = *SLABNext( obj );
-        void* prev = *SLABPrev( obj );
-
-        if( obj == head ) {
-            if( next ) *SLABPrev( next ) = NULL;
-            *head = next;
-        }else{
-            if( next ) *SLABPrev( next ) = prev;
-            *SLABNext( prev ) = next;
-        }
-        SpinlockRelease( removeLock );
-    }
+    SpinlockLock( &slab->InUse );   // To prevent initiating non-empty page return to pool.
+    if( SLABCanRemoveObjectFromList(obj) ) SLABListRemove( slub, obj );
     SpinlockRelease( &slab->InUse );
 }
 
 
-void SLABAddToList( void** head, void* obj, spinlock_t* removeLock ) {
+void SLABSafeListAdd( void** head, void* obj, spinlock_t* removeLock ) {
     *SLABPrev( obj ) = NULL;
     SpinlockLock( removeLock ); // To ensure our previous head never modified mid-insertion
     *SLABNext( obj ) = AtomicExchange64( (uint64_t*)head, (uint64_t)obj );
@@ -334,14 +342,21 @@ void SLABAddToList( void** head, void* obj, spinlock_t* removeLock ) {
 }
 
 
-void SLABDeletePage( SLUB* slub, void* randomPointer ) {
+void SLABTryReturnPage( SLUB* slub, void* randomPointer ) {
     SLAB* slab = SLABObject( randomPointer );
 
     SpinlockLock( &slab->InUse );
     if( SLABCanFree(slab) ) {
-        SLABRemoveFromList( slab );
-
+        SLABListRemove( slab );
+        
+        for( size_t size = sizeof(SLAB); size < slab->ElementLength; size *= 2 )
+            SLABListRemove( slub, (void*)((uintptr_t)slab + size) ); // Residual slab offset == size
     }
     SpinlockRelease( &slab->InUse );
+}
 
+
+void SLABAllocate( SLUB* slub, size_t size ) {
+    size_t order = SLABSizeToOrder( size );
+    void** head = slub->Partial[order];
 }

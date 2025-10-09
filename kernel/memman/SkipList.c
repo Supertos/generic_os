@@ -21,15 +21,16 @@ static inline size_t SkipListNodeHeight( SkipList* node ) {
 
 
 /* Explicitly initializes SkipList node. */
-void SkipListInitNode( SkipList* node ) {
+void SkipListInitNode( SkipList* node, void* payload ) {
     *node = (SkipList){ 0 };
+    node->Payload = payload;
 }
 
 
-/* Writes previous nodes for weight on all levels in given path array. */
+/* Writes previous nodes on all levels for given weight to given array. */
 void SkipListFindPrevs( SkipList* sentinel, SkipList** path, size_t weight ) {
     SkipList* node = sentinel, *next;
-    for( int i = SKIPLIST_MAX_LEVELS - 1; i >= 0; --i ) {
+    for( ssize_t i = SKIPLIST_MAX_LEVELS - 1; i >= 0; --i ) {
         while( (next=node->Next[i]) && next->Weight < weight ) node = next;
         path[i] = node;
     }

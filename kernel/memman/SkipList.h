@@ -20,7 +20,7 @@ struct SkipList {
 
 
 /* Explicitly initializes SkipList node. */
-void SkipListInitNode( SkipList* node );
+void SkipListInitNode( SkipList* node, void* payload );
 
 
 /* Inserts node in Skip List characterized by it's sentinel based on node weight.
