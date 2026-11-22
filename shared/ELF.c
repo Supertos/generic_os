@@ -59,11 +59,8 @@ static inline void ProcessDynamic( const ELFProgram* self, const ELF* elf, ELFIn
 
 		if( cur.Type == DT_RELA ) info->RELABase = (ELFRelocation*)(base + cur.Value);
 		if( cur.Type == DT_SYMTAB ) info->SYMBase = (ELFSymbol*)(base + cur.Value);
-		if( cur.Type == DT_STRTAB ) {
-			info->STRBase = base + cur.Value;
-			
-		}
-
+		if( cur.Type == DT_STRTAB ) info->STRBase = base + cur.Value;
+		
 		if( cur.Type == DT_RELASZ ) info->RELASize = cur.Value;
 		if( cur.Type == DT_RELAENT ) info->RELAEntrySize = cur.Value;
 		if( cur.Type == DT_STRSZ ) info->STRSize = cur.Value;
