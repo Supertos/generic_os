@@ -53,8 +53,8 @@ typedef unsigned short     u16;
 typedef unsigned int       u32;
 typedef unsigned long long u64;
 
-typedef unsigned int       i32;
-typedef unsigned long long i64;
+typedef signed int         i32;
+typedef signed long long   i64;
 
 typedef unsigned long long __attribute__((mode(pointer))) usize;
 

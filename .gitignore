@@ -17,3 +17,5 @@ uefi/string.c
 uefi/time.c
 uefi/uefi.h
 uefi/unistd.c
+build/*
+build

@@ -20,7 +20,7 @@ Components completed as of 22.11.2026:
 | Task | Started | Completed |
 |-|-|-|
 | NUMA-aware Physical Memory Manager | 10.01.2024 | 12.11.2026 |
-| Generic Bootloader | 10.01.2024 | 12.06.2025 |
+| Generic Bootloader | 10.01.2024 | 21.09.2025 |
 | NUMA-aware Virtual Memory Manager | 18.01.2026 | 08.07.2026 |
 
 Roadmap is as follows:
