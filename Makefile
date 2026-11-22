@@ -5,12 +5,13 @@ ARCH = x86_64
 SHRDIR    = shared
 OUTDIR    = build
 
-CFLAGS    = -std=gnu2x -ffreestanding -fPIC -MMD -MP -mno-red-zone -fno-stack-protector
-WFLAGS    = -Wall -Wextra -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Wswitch-default -Wswitch-enum
-LDFLAGS   = -nostdlib -nodefaultlibs -e KernelEntry -export-dynamic
-DBG_FLAGS = $(if $(DEBUG),-g -O0,-O3) -fno-delete-null-pointer-checks
-LIB_FLAGS = -L$(OUTDIR) -lshared -I$(SHRDIR) 
-EFI_FLAGS = -Wall -Wextra -O2 -DGENERIC_LOADER -std=gnu2x -L../$(OUTDIR) -lshared -I../$(SHRDIR)
+CFLAGS    	= -std=gnu2x -ffreestanding -fPIC -MMD -MP -mno-red-zone -fno-stack-protector -maccumulate-outgoing-args
+WFLAGS    	= -Wall -Wextra -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Wswitch-default -Wswitch-enum
+LDFLAGS   	= -nostdlib -nodefaultlibs -e KernelEntry -export-dynamic
+DBG_FLAGS 	= $(if $(DEBUG),-g -O0,-O3) -fno-delete-null-pointer-checks
+LIB_FLAGS 	= -L$(OUTDIR) -lshared -I$(SHRDIR) 
+EFI_FLAGS 	= -Wall -Wextra -O2 -DGENERIC_LOADER -std=gnu2x -I../$(SHRDIR)
+EFI_LDFLAGS = -L../$(OUTDIR) -lshared
 
 CC = gcc
 
@@ -55,14 +56,15 @@ $(OUTDIR)/kernel.elf: $(OUTDIR)/libshared.a
 		CC="$(CC)"
 
 # === loader.efi === #
-$(OUTDIR)/loader.efi: loader/*.c | $(SHR_OBJS)
+$(OUTDIR)/loader.efi: loader/*.c | $(OUTDIR)/libshared.a
 	@mkdir $(OUTDIR)/loader -p
 	@$(MAKE) -C uefi		 			\
 		INDIR="../loader" 	\
 		TARGET=loader.efi				\
 		EXTRA_CFLAGS="$(EFI_FLAGS) $(DBG_FLAGS)" 	\
-		OUTDIR="../$(OUTDIR)" 1>/dev/null \
-		CC="$(CC)"
+		EXTRA_LDFLAGS="$(EFI_LDFLAGS)" \
+		OUTDIR="../$(OUTDIR)"  \
+		CC="$(CC)" # 1>/dev/null
 	@echo "    MAKE uefi/Makefile"
 
 

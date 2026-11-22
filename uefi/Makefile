@@ -124,10 +124,11 @@ $(CRT_OBJ): $(CRT_SRC) | $(OUTDIR)/uefi
 # Linking
 
 $(SO_FILE): $(APP_OBJS) $(CRT_OBJ) $(OUTDIR)/libuefi.a
-	@$(LD) $(LDFLAGS) -T $(EFI_LDS) -o $@ \
+	$(LD) $(LDFLAGS) -T $(EFI_LDS) -o $@ \
 		$(CRT_OBJ) \
 		$(APP_OBJS) \
-		$(OUTDIR)/libuefi.a
+		$(OUTDIR)/libuefi.a \
+		$(EXTRA_LDFLAGS)
 
 $(EFI_FILE): $(SO_FILE)
 	@$(OBJCOPY) \

@@ -129,6 +129,7 @@ __attribute__((noinline)) void SwitchStackAndJump(KernelEntry entry, void* arg, 
 int main() {
 	asm volatile("andq $-16, %%rsp" : : : ); 
 	Memory image = DownloadFileToMemory( L"\\ELF\\CORE\\KERNEL.ELF" );
+	printf("%x\n", ELFValid);
 	if( !MemoryValid(image) || !ELFValid((ELF*)image.Base) ) return 1;
 	ELFInfo info = RetrieveELFInfo((ELF*)image.Base);
 
