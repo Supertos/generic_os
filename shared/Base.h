@@ -7,6 +7,8 @@
     #define NULL ((void*)(~0ULL))
     #define min(x, y)                    ({ typeof(x) _x = x; typeof(y) _y = y; _x < _y ? _x : _y; })
     #define max(x, y)                    ({ typeof(x) _x = x; typeof(y) _y = y; _x > _y ? _x : _y; })
+#else
+    #include <uefi.h>
 #endif
 
 #define tail                         [[gnu::musttail]]
@@ -19,6 +21,7 @@
 #define may_alias                    __attribute__((__may_alias__))
 #define packed                       __attribute__((__packed__))
 #define unused                       __attribute__((unused))
+#define exported                     __attribute__((visibility("default")))
 
 #define AlignDown(base, align)       ({ u64 __base = (u64)(base); u64 __align = (u64)(align); (typeof(base))(__base & ~(__align - 1)); })
 #define AlignUp(base, align)         ({ u64 _base = (u64)(base); u64 _align = (u64)(align); (typeof(base))AlignDown(_base + (_align - 1), _align); })
@@ -69,6 +72,8 @@ typedef struct { Allocate From; Free To; void* Self; } Allocator;
 typedef u16 CoreID;
 typedef u16 ContextID;
 typedef u8  DomainID;
+
+typedef struct ExternalSymbol ExternalSymbol;
 
 typedef struct PageWalker PageWalker;
 
@@ -125,6 +130,35 @@ static inline char* MemorySet( Memory self, u8 val ) {
     for( usize i = 0; i < MemorySize(self); i++ )
         ((u8*)self.Base)[i] = val;
     return (char*)self.Base;
+}
+
+static inline void MemoryCopy( Memory from, Memory to ) {
+    for( usize i = 0; i < min(MemorySize(from), MemorySize(to)); i++ )
+        ((char*)to.Base)[i] = ((char*)from.Base)[i];
+}
+
+static inline bool MemoryCompare( Memory a, Memory b ) {
+    if( MemorySize(a) != MemorySize(b) ) return false;
+    for( usize i = 0; i < MemorySize(a); i++ )
+        if( ((char*)a.Base)[i] != ((char*)b.Base)[i] ) return false;
+
+    return true;
+}
+
+static inline bool StringCompare( char* a, char* b ) {
+    for( usize i = 0;  a[i] || b[i]; i++ )
+        if( a[i] != b[i] ) return false;
+
+    return true;
+}
+
+static inline usize StringCopy( char* from, char* to ) {
+    usize i = 0;
+    do {
+        to[i] = from[i];
+    } while( from[i++] );
+
+    return i;
 }
 
 #define CAS_HELPER(size)                                                        \

@@ -132,20 +132,30 @@ int main() {
 	if( !MemoryValid(image) || !ELFValid((ELF*)image.Base) ) return 1;
 	ELFInfo info = RetrieveELFInfo((ELF*)image.Base);
 
-	Memory target = AllocateBytes(info.size);
+	Memory target = AllocateBytes(MemorySize(info.Range));
 	if( !MemoryValid(target) ) {
 		FreeBytes(image);
 		return 1;
 	}
 	
-	KernelEntry entry = (KernelEntry)LoadELF( (ELF*)image.Base, (void*)target.Base, info );
-	RelocateELF((ELF*)image.Base, (void*)target.Base, info);
-	
+	KernelEntry entry = (KernelEntry)LoadELF( (ELF*)image.Base, target, info );
+	RelocateELF(target, info, NULL);
+
+	usize exportSize = ExportTableSize(info);
+	Memory exportTable = AllocateBytes(exportSize);
+	if( !MemoryValid(target) ) {
+		FreeBytes(image);
+		FreeBytes(target);
+		return 1;
+	}
+	ExtractELFSymbols((ELF*)image.Base, info, target, exportTable);
+
 	Memory stack = AllocateBytes(PAGE * 128);
 
 	usize memDescSize = 0;
 	RootTable* root = RootTableNew(&memDescSize);
-	
+	root->KernelSymbols = (ExternalSymbol*)exportTable.Base;
+
 	if( !RecoverVideoMode(root) || !RecoverACPITable(root) || !RecoverMemoryMap(root, memDescSize) )
 		return 1;
 

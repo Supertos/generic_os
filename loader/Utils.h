@@ -1,8 +1,6 @@
 /* Supertos Industries
 	Generic OS UEFI Loader
 */
-#define GENERICBOOTLOADER 1
-
 #include <uefi.h>
 #include "Base.h"
 

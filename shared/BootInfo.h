@@ -3,6 +3,7 @@
  */
 #pragma once
 
+#include "ELF.h"
 #include "Base.h"
 
 typedef struct VideoInfo VideoInfo;
@@ -19,7 +20,7 @@ struct MemoryEntry {
 	Memory Range;
 	u64 Type;
 };
-
+ 
 typedef struct RootTable RootTable;
 struct RootTable {
 	void* XSDT;
@@ -27,6 +28,7 @@ struct RootTable {
 	may_alias MemoryEntry* MemoryMap;
 	VideoInfo Video;
 	Memory ELFLoadedRange;
+	ExternalSymbol* KernelSymbols;
 };
 
 #define MEMMAP_AVALIABLE 0b01ULL

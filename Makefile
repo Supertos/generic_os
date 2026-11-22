@@ -7,7 +7,7 @@ OUTDIR    = build
 
 CFLAGS    = -std=gnu2x -ffreestanding -fPIC -MMD -MP -mno-red-zone -fno-stack-protector
 WFLAGS    = -Wall -Wextra -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Wswitch-default -Wswitch-enum
-LDFLAGS   = -nostdlib -nodefaultlibs -e KernelEntry
+LDFLAGS   = -nostdlib -nodefaultlibs -e KernelEntry -export-dynamic
 DBG_FLAGS = $(if $(DEBUG),-g -O0,-O3) -fno-delete-null-pointer-checks
 LIB_FLAGS = -L$(OUTDIR) -lshared -I$(SHRDIR) 
 EFI_FLAGS = -Wall -Wextra -O2 -DGENERIC_LOADER -std=gnu2x -L../$(OUTDIR) -lshared -I../$(SHRDIR)
@@ -91,10 +91,10 @@ qemu:
 	@qemu-system-x86_64 \
 		-enable-kvm \
 		-cpu host \
-		-m 44M \
+		-m 128M \
 		-numa node,nodeid=0,cpus=0-1,memdev=mem0 \
-		-object memory-backend-ram,id=mem0,size=22M \
-		-object memory-backend-ram,id=mem1,size=22M \
+		-object memory-backend-ram,id=mem0,size=64M \
+		-object memory-backend-ram,id=mem1,size=64M \
 		-numa node,nodeid=1,cpus=2-3,memdev=mem1 \
 		-smp 4,sockets=1,cores=2,threads=2 \
 		-bios /usr/share/ovmf/OVMF.fd \
